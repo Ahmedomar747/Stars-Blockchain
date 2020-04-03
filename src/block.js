@@ -17,7 +17,7 @@ class Block {
     // Constructor - argument data will be the object containing the transaction data
 	constructor(data){
 		this.hash = null;                                           // Hash of the block
-		this.height = 0;                                            // Block Height (consecutive number of each block)
+        this.height = 0;                                           // Block Height (consecutive number of each block)
 		this.body = Buffer(JSON.stringify(data)).toString('hex');   // Will contain the transactions stored in the block, by default it will encode the data
 		this.time = 0;                                              // Timestamp for the Block creation
 		this.previousBlockHash = null;                              // Reference to the previous Block Hash
@@ -69,17 +69,21 @@ class Block {
     getBData() {
         let self = this;
         return new Promise( (resolve,reject) => {
-            if(self.height < 1){
+            if(self.height > 0){
+
+                // Getting the encoded data saved in the Block
+                let enc_data = self.body;
+                // Decoding the data to retrieve the JSON representation of the object
+                let dec_data = hex2ascii(enc_data);
+                // Parse the data to an object to be retrieve.
+                let starObj = JSON.parse(dec_data);
+                // Resolve with the data if the object isn't the Genesis block
+                resolve(starObj.data)
+            }
+            else{
                 reject(new Error("Retrieving data of Gensis Block"));
             }
-            // Getting the encoded data saved in the Block
-            let enc_data = Block.data;
-            // Decoding the data to retrieve the JSON representation of the object
-            let dec_data = hex2ascii(enc_data);
-            // Parse the data to an object to be retrieve.
-            let starObj = JSON.parse(dec_data);
-            // Resolve with the data if the object isn't the Genesis block
-            resolve(starObj)
+            
         });
 
 

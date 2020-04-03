@@ -71,11 +71,12 @@ class Blockchain {
             }         
             block.time = new Date().getTime().toString().slice(0,-3);
             block.hash = SHA256(JSON.stringify(block)).toString();
+            block.height = self.height;
             if(block != null){
-            resolve(self.chain.push(block));
+                resolve(self.chain.push(block));
             }
             else{
-            reject(new Error("Error adding Block."));
+                reject(new Error("Error adding Block."));
             }
         });
     }
@@ -122,9 +123,12 @@ class Blockchain {
             let time = parseInt(message.split(':')[1]);
             let currentTime = parseInt(new Date().getTime().toString().slice(0, -3));
             if( (Math.abs(time - currentTime) <  (5 * 60000)) &&  bitcoinMessage.verify(message, address, signature)){
-                let block = new Block(star);
-                self.chain._addBlock(block);
+                let block = new BlockClass.Block({data: {address: address, message: message, signature: signature, star: star}});
+                self._addBlock(block);
                 resolve(block);
+            }
+            else{
+                reject(new Error("Submit Star Error"))
             }
         });
     }
@@ -178,13 +182,16 @@ class Blockchain {
         let self = this;
         let stars = [];
         return new Promise((resolve, reject) => {
-            for(let i =0;i< self.chain.length; i++){
-                let data = self.chain[i].getBData();
-                if(data.address == address){
-                    stars.push(data.star);
-                }
-                
-            }
+            
+            for(let i =1;i< self.chain.length; i++){
+                let block = self.chain[i];
+                block.getBData().then((data) => {
+                    if(data.address == address){
+                        stars.push({owner: address,star: data.star});
+                    }
+                }).catch((err) => {});
+
+            }   
             resolve(stars);
         });
     }
@@ -200,7 +207,9 @@ class Blockchain {
         let errorLog = [];
         return new Promise(async (resolve, reject) => {
             for (let i = 0; i <self.chain;i++){
-                errorLog[i] = self.chain[i].validate();
+                self.chain[i].validate().then( (value) => {
+                    errorLog[i] = value;
+            });
             }
             if(errorLog.length > 0){
                 resolve(errorLog);
