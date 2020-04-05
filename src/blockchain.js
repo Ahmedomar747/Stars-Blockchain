@@ -142,16 +142,12 @@ class Blockchain {
     getBlockByHash(hash) {
         let self = this;
         return new Promise((resolve, reject) => {
-           for(let i = 0; i<self.chain.length;i++){
-               let block = self.chain[i];
-               let currentBlockHash = SHA256(JSON.stringify(block));
-               if(currentBlockHash == hash){
-                   resolve(block);
-                   break;
-               }
-
-            reject(new Error("Block does not exist"));
-           }
+            let block = self.chain.filter(p => p.hash === hash)[0];
+            if(block){
+                resolve(block);
+            } else {
+                resolve(null);
+            }
         });
     }
 
@@ -183,7 +179,7 @@ class Blockchain {
         let stars = [];
         return new Promise((resolve, reject) => {
             
-            for(let i =1;i< self.chain.length; i++){
+            for(let i =0;i< self.chain.length; i++){
                 let block = self.chain[i];
                 block.getBData().then((data) => {
                     if(data.address == address){
@@ -207,8 +203,10 @@ class Blockchain {
         let errorLog = [];
         return new Promise(async (resolve, reject) => {
             for (let i = 0; i <self.chain;i++){
-                self.chain[i].validate().then( (value) => {
-                    errorLog[i] = value;
+                self.chain[i].validate().then( () => {
+                    errorLog[i] = true;
+            }).catch( () => {
+                errorLog[i] = false;
             });
             }
             if(errorLog.length > 0){
